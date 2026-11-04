@@ -1,0 +1,33 @@
+- name: Deploy TodoApp
+  hosts: ec2
+  become: true
+  vars:
+    image: "{{ dockerhub_username }}/todoapp:latest"
+  tasks:
+    - name: Install Docker
+      ansible.builtin.apt:
+        name: docker.io
+        state: present
+        update_cache: true
+
+    - name: Start Docker service
+      ansible.builtin.service:
+        name: docker
+        state: started
+        enabled: true
+
+    - name: Pull latest image
+      community.docker.docker_image:
+        name: "{{ image }}"
+        source: pull
+        force_source: true
+
+    - name: Run container
+      community.docker.docker_container:
+        name: todoapp
+        image: "{{ image }}"
+        state: started
+        recreate: true
+        restart_policy: always
+        published_ports:
+          - "80:80"
